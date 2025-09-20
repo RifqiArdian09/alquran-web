@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import { getSurahDualEdition } from '../services/quranApi';
 import AyahItem from '../components/AyahItem';
 
@@ -10,6 +10,9 @@ export default function SurahDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [playingAyah, setPlayingAyah] = useState(null);
+  const surahNumber = Number(id);
+  const prevId = surahNumber > 1 ? String(surahNumber - 1) : null;
+  const nextId = surahNumber < 114 ? String(surahNumber + 1) : null;
 
   const loadSurah = useCallback(async () => {
     let mounted = true;
@@ -86,6 +89,13 @@ export default function SurahDetail() {
 
   return (
     <div className="container page-transition">
+      <div className="actions actions--top">
+        <Link to="/" className="btn-secondary">← Kembali ke daftar</Link>
+        <div className="actions__group">
+          {prevId && <Link to={`/surah/${prevId}`} className="btn-secondary">← Sebelumnya</Link>}
+          {nextId && <Link to={`/surah/${nextId}`} className="btn-secondary">Berikutnya →</Link>}
+        </div>
+      </div>
       <div className="surah-meta">
         <div className="name-ar">{data.meta.nameAr}</div>
         <div className="name-lat">{data.meta.nameLat} • {data.meta.translation} • {data.meta.totalAyah} ayat</div>
@@ -102,6 +112,13 @@ export default function SurahDetail() {
             onEnded={onEnded}
           />
         ))}
+      </div>
+      <div className="actions actions--bottom">
+        <Link to="/" className="btn-secondary">← Kembali ke daftar</Link>
+        <div className="actions__group">
+          {prevId && <Link to={`/surah/${prevId}`} className="btn-secondary">← Sebelumnya</Link>}
+          {nextId && <Link to={`/surah/${nextId}`} className="btn-secondary">Berikutnya →</Link>}
+        </div>
       </div>
     </div>
   );

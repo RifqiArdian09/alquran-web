@@ -51,7 +51,6 @@ export default function Home() {
 
   return (
     <div className="container page-transition">
-      <h1>Daftar Surah</h1>
 
       {lastRead && (
         <div className="last-read">
