@@ -9,7 +9,7 @@ function getBookmarks() {
 }
 function setBookmarks(arr) { localStorage.setItem(BOOKMARK_KEY, JSON.stringify(arr)); }
 
-export default function AyahItem({ surahNumber, ayah, isPlaying, onPlay, onPause }) {
+export default function AyahItem({ surahNumber, ayah, isPlaying, onPlay, onPause, onEnded }) {
   const audioRef = useRef(null);
   const audio = useAudioContext();
 
@@ -72,7 +72,14 @@ export default function AyahItem({ surahNumber, ayah, isPlaying, onPlay, onPause
             <button onClick={isPlaying ? onPause : handlePlay} className="play-btn">
               {isPlaying ? 'Pause' : 'Play'}
             </button>
-            <audio ref={audioRef} src={ayah.audioUrl} onEnded={onPause} preload="none" />
+            <audio
+              ref={audioRef}
+              src={ayah.audioUrl}
+              onEnded={() => {
+                if (typeof onEnded === 'function') onEnded(ayah.n);
+              }}
+              preload="none"
+            />
           </>
         ) : (
           <span className="no-audio">Audio tidak tersedia</span>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import SurahListItem from '../components/SurahListItem';
 import { getAllSurah } from '../services/quranApi';
 import { Link } from 'react-router-dom';
@@ -17,23 +17,26 @@ export default function Home() {
     setLastRead(lr ? JSON.parse(lr) : null);
   }, []);
 
-  useEffect(() => {
+  const loadSurahs = useCallback(async () => {
     let mounted = true;
-    const load = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const data = await getAllSurah();
-        if (mounted) setSurahs(data);
-      } catch (e) {
-        if (mounted) setError(e.message || 'Gagal memuat surah');
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-    load();
+    setLoading(true);
+    setError('');
+    try {
+      const data = await getAllSurah();
+      if (mounted) setSurahs(data);
+    } catch (e) {
+      if (mounted) setError(e.message || 'Gagal memuat surah');
+    } finally {
+      if (mounted) setLoading(false);
+    }
     return () => { mounted = false; };
   }, []);
+
+  useEffect(() => {
+    let cleanup = () => {};
+    loadSurahs().then((fn) => { if (typeof fn === 'function') cleanup = fn; });
+    return () => cleanup();
+  }, [loadSurahs]);
 
   const filtered = surahs.filter((s) => {
     if (!query) return true;
@@ -47,7 +50,7 @@ export default function Home() {
   });
 
   return (
-    <div className="container">
+    <div className="container page-transition">
       <h1>Daftar Surah</h1>
 
       {lastRead && (
@@ -76,7 +79,7 @@ export default function Home() {
       {error && (
         <div className="error-row">
           <p className="error">{error}</p>
-          <button onClick={() => window.location.reload()}>Coba Lagi</button>
+          <button onClick={loadSurahs}>Coba Lagi</button>
         </div>
       )}
 

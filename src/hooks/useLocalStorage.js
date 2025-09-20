@@ -35,3 +35,15 @@ export function useTheme(key = 'alquran.theme') {
 
   return [theme, setTheme];
 }
+
+// Accent color management
+export function useAccent(key = 'alquran.accent') {
+  const [accent, setAccent] = useLocalStorage(key, 'indigo'); // indigo | emerald | amber
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.setAttribute('data-accent', accent);
+  }, [accent]);
+
+  return [accent, setAccent];
+}

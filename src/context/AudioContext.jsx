@@ -39,6 +39,7 @@ export function AudioProvider({ children }) {
   return <AudioCtx.Provider value={value}>{children}</AudioCtx.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAudioContext() {
   const ctx = useContext(AudioCtx);
   if (!ctx) throw new Error('useAudioContext must be used within AudioProvider');

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { getSurahDualEdition } from '../services/quranApi';
 import AyahItem from '../components/AyahItem';
@@ -11,26 +11,29 @@ export default function SurahDetail() {
   const [error, setError] = useState('');
   const [playingAyah, setPlayingAyah] = useState(null);
 
-  useEffect(() => {
+  const loadSurah = useCallback(async () => {
     let mounted = true;
-    const load = async () => {
-      setLoading(true);
-      setError('');
-      setPlayingAyah(null);
-      try {
-        const d = await getSurahDualEdition(id);
-        if (!mounted) return;
-        setData(d);
-      } catch (e) {
-        if (!mounted) return;
-        setError(e.message || 'Gagal memuat surah');
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-    load();
+    setLoading(true);
+    setError('');
+    setPlayingAyah(null);
+    try {
+      const d = await getSurahDualEdition(id);
+      if (!mounted) return () => {};
+      setData(d);
+    } catch (e) {
+      if (!mounted) return () => {};
+      setError(e.message || 'Gagal memuat surah');
+    } finally {
+      if (mounted) setLoading(false);
+    }
     return () => { mounted = false; };
   }, [id]);
+
+  useEffect(() => {
+    let cleanup = () => {};
+    loadSurah().then((fn) => { if (typeof fn === 'function') cleanup = fn; });
+    return () => cleanup();
+  }, [loadSurah]);
 
   // Scroll to hash if exists
   useEffect(() => {
@@ -43,13 +46,23 @@ export default function SurahDetail() {
     }
   }, [location.hash, data]);
 
-  const title = useMemo(() => {
-    if (!data) return '';
-    return `${data.meta.englishName || data.meta.nameAr || 'Surah'} (${data.meta.number})`;
-  }, [data]);
+  // Scrollspy: when playingAyah changes, scroll that ayah into view
+  useEffect(() => {
+    if (!playingAyah) return;
+    const el = document.getElementById(`ayah-${playingAyah}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [playingAyah]);
 
   const onPlay = (n) => setPlayingAyah(n);
   const onPause = () => setPlayingAyah(null);
+  const onEnded = (n) => {
+    if (!data) return;
+    const next = n + 1;
+    if (next <= data.meta.totalAyah) setPlayingAyah(next);
+    else setPlayingAyah(null);
+  };
 
   if (loading) return (
     <div className="container">
@@ -65,15 +78,14 @@ export default function SurahDetail() {
     <div className="container">
       <div className="error-row">
         <p className="error">{error}</p>
-        <button onClick={() => window.location.reload()}>Coba Lagi</button>
+        <button onClick={loadSurah}>Coba Lagi</button>
       </div>
     </div>
   );
   if (!data) return null;
 
   return (
-    <div className="container">
-      <h1>{title}</h1>
+    <div className="container page-transition">
       <div className="surah-meta">
         <div className="name-ar">{data.meta.nameAr}</div>
         <div className="name-lat">{data.meta.nameLat} • {data.meta.translation} • {data.meta.totalAyah} ayat</div>
@@ -87,6 +99,7 @@ export default function SurahDetail() {
             isPlaying={playingAyah === a.n}
             onPlay={onPlay}
             onPause={onPause}
+            onEnded={onEnded}
           />
         ))}
       </div>
